@@ -1,0 +1,21 @@
+# Build output directories for every lab
+bin/
+obj/
+
+# Generated grading files and hand-in archives
+.gdb.in
+.qemu.out
+proj*-handin.tar.gz
+
+# Generated source navigation indexes
+cscope.files
+cscope.out
+cscope.in.out
+cscope.po.out
+tags
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.DS_Store
