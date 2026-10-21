@@ -34,7 +34,7 @@ static void check_alloc_page(void);
 
 // init_pmm_manager - initialize a pmm_manager instance
 static void init_pmm_manager(void) {
-    pmm_manager = &default_pmm_manager;
+    pmm_manager = &best_fit_pmm_manager;
     cprintf("memory management: %s\n", pmm_manager->name);
     pmm_manager->init();
 }
@@ -61,7 +61,67 @@ size_t nr_free_pages(void) {
     return pmm_manager->nr_free_pages();
 }
 
-//lab2 function1 YOUR CODE
+//lab2 function1 2410867
+static void page_init(void) {
+    extern char end[];
+
+    va_pa_offset = PHYSICAL_MEMORY_OFFSET;
+
+    uint64_t mem_base = get_memory_base();
+    uint64_t mem_size = get_memory_size();
+
+    if (mem_base == 0 || mem_size == 0 ||
+        mem_size > (~(uint64_t)0 - mem_base)) {
+        panic("page_init: invalid memory information");
+    }
+
+    uint64_t mem_end = mem_base + mem_size;
+
+    if (mem_base > KERNEL_BEGIN_PADDR ||
+        mem_end <= KERNEL_BEGIN_PADDR) {
+        panic("page_init: memory range does not contain kernel");
+    }
+
+    cprintf("physical memory map:\n");
+    cprintf("  memory: 0x%016lx, [0x%016lx, 0x%016lx].\n",
+            (unsigned long)mem_size,
+            (unsigned long)mem_base,
+            (unsigned long)(mem_end - 1));
+
+    uintptr_t maxpa = mem_end;
+    if (maxpa > PHYSICAL_MEMORY_END) {
+        maxpa = PHYSICAL_MEMORY_END;
+    }
+    maxpa = ROUNDDOWN(maxpa, PGSIZE);
+
+    npage = PPN(maxpa);
+    if (npage <= nbase || PADDR(end) > maxpa) {
+        panic("page_init: insufficient manageable memory");
+    }
+
+    pages = (struct Page *)ROUNDUP((uintptr_t)end, PGSIZE);
+
+    size_t page_count = npage - nbase;
+    uintptr_t pages_pa = PADDR(pages);
+
+    if (pages_pa > maxpa ||
+        page_count > (maxpa - pages_pa) / sizeof(struct Page)) {
+        panic("page_init: insufficient memory for page descriptors");
+    }
+
+    memset(pages, 0, page_count * sizeof(struct Page));
+    for (size_t i = 0; i < page_count; i++) {
+        SetPageReserved(pages + i);
+    }
+
+    uintptr_t freemem =
+        ROUNDUP(PADDR(pages + page_count), PGSIZE);
+
+    if (freemem < maxpa) {
+        init_memmap(pa2page(freemem),
+                    (maxpa - freemem) / PGSIZE);
+    }
+}
 
 /* pmm_init - initialize the physical memory management */
 void pmm_init(void) {
