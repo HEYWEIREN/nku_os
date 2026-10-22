@@ -3,7 +3,8 @@
 #include <best_fit_pmm.h>
 #include <stdio.h>
 
-//lab2 function2-2 2410867
+//lab2 function2-2 YOUR CODE
+
 static free_area_t free_area;
 
 #define free_list (free_area.free_list)
@@ -54,6 +55,7 @@ best_fit_init(void) {
     nr_free = 0;
 }
 
+////登记空闲区域
 static void
 best_fit_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
@@ -68,6 +70,7 @@ best_fit_init_memmap(struct Page *base, size_t n) {
     best_fit_insert_block(base);
 }
 
+////分配连续页
 static struct Page *
 best_fit_alloc_pages(size_t n) {
     assert(n > 0);
@@ -106,6 +109,7 @@ best_fit_alloc_pages(size_t n) {
     return page;
 }
 
+//释放连续页
 static void
 best_fit_free_pages(struct Page *base, size_t n) {
     assert(n > 0);
@@ -134,6 +138,7 @@ const struct pmm_manager best_fit_pmm_manager = {
     .nr_free_pages = best_fit_nr_free_pages,
     .check = best_fit_check,
 };
+
 
 // Framework tests: students must not modify basic_check or best_fit_check.
 static void

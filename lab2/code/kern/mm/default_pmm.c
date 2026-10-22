@@ -14,6 +14,7 @@ default_init(void) {
     nr_free = 0;
 }
 
+//登记空闲区域
 static void
 default_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
@@ -42,6 +43,7 @@ default_init_memmap(struct Page *base, size_t n) {
     }
 }
 
+//分配连续页
 static struct Page *
 default_alloc_pages(size_t n) {
     assert(n > 0);
@@ -72,6 +74,7 @@ default_alloc_pages(size_t n) {
     return page;
 }
 
+//释放连续页
 static void
 default_free_pages(struct Page *base, size_t n) {
     assert(n > 0);
@@ -179,9 +182,12 @@ basic_check(void) {
 }
 
 // LAB2: below code is used to check the first fit allocation algorithm (your EXERCISE 1) 
+
+
 // NOTICE: You SHOULD NOT CHANGE basic_check, default_check functions!
 static void
 default_check(void) {
+    //记录测试前的空闲块数和空闲页数
     int count = 0, total = 0;
     list_entry_t *le = &free_list;
     while ((le = list_next(le)) != &free_list) {
@@ -192,7 +198,8 @@ default_check(void) {
     assert(total == nr_free_pages());
 
     basic_check();
-
+    
+    //申请连续 5 页，并隔离其他空闲内存
     struct Page *p0 = alloc_pages(5), *p1, *p2;
     assert(p0 != NULL);
     assert(!PageProperty(p0));
@@ -204,7 +211,7 @@ default_check(void) {
 
     unsigned int nr_free_store = nr_free;
     nr_free = 0;
-
+    //释放后三页，测试连续分配和空间不足
     free_pages(p0 + 2, 3);
     assert(alloc_pages(4) == NULL);
     assert(PageProperty(p0 + 2) && p0[2].property == 3);
@@ -212,14 +219,18 @@ default_check(void) {
     assert(alloc_page() == NULL);
     assert(p0 + 2 == p1);
 
+    //构造两个被占用页隔开的空闲块
     p2 = p0 + 1;
     free_page(p0);
     free_pages(p1, 3);
     assert(PageProperty(p0) && p0->property == 1);
     assert(PageProperty(p1) && p1->property == 3);
 
+    //验证 First-Fit 优先选择前面的块
     assert((p0 = alloc_page()) == p2 - 1);
     free_page(p0);
+
+    //验证跳过不够大的块，并拆分较大的块
     assert((p0 = alloc_pages(2)) == p2 + 1);
 
     free_pages(p0, 2);

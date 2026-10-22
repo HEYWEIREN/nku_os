@@ -36,6 +36,14 @@ struct Page {
     uint64_t flags;                 // array of flags that describe the status of the page frame
     unsigned int property;          // the num of free block, used in first fit pm manager
     list_entry_t page_link;         // free list link
+
+    /*
+    仅空闲块首页作为 AVL 节点时使用
+    struct Page *left;
+    struct Page *right;
+    int height;
+    unsigned int max_free;
+    */
 };
 
 /* Flags describing the status of a page frame */
