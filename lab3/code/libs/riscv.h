@@ -201,6 +201,8 @@
     asm volatile ("csrrw %0, " #reg ", %1" : "=r"(__tmp) : "r"(val)); \
   __tmp; })
 
+//把指定 CSR 寄存器中，掩码对应的位设置为 1，其他位保持不变，并返回修改前的值
+//CSR 是“控制与状态寄存器”，用于控制中断、记录异常
 #define set_csr(reg, bit) ({ unsigned long __tmp; \
   if (__builtin_constant_p(bit) && (unsigned long)(bit) < 32) \
     asm volatile ("csrrs %0, " #reg ", %1" : "=r"(__tmp) : "i"(bit)); \

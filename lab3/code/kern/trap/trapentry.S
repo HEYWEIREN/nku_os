@@ -2,7 +2,7 @@
 
     .macro SAVE_ALL
 
-    csrw sscratch, sp
+    csrw sscratch, sp #sp是栈指针，sscratch是一个供S模式软件使用的 CSR
 
     addi sp, sp, -36 * REGBYTES
     # save x registers
@@ -41,7 +41,7 @@
     # get sr, epc, badvaddr, cause
     # Set sscratch register to 0, so that if a recursive exception
     # occurs, the exception vector knows it came from the kernel
-    csrrw s0, sscratch, x0
+    csrrw s0, sscratch, x0  #s0 ← sscratch(sp), sscratch ← x0
     csrr s1, sstatus
     csrr s2, sepc
     csrr s3, sbadaddr
@@ -56,12 +56,13 @@
 
     .macro RESTORE_ALL
 
-    #lab3 function1 2410867
-    LOAD t0, 32*REGBYTES(sp)
-    LOAD t1, 33*REGBYTES(sp)
-    csrw sstatus, t0
-    csrw sepc, t1
+    # 恢复返回所需的 CSR；临时寄存器的原值将在下面恢复
+    LOAD s1, 32*REGBYTES(sp)
+    LOAD s2, 33*REGBYTES(sp)
+    csrw sstatus, s1 #为 sret 提供原特权级、中断使能等返回状态
+    csrw sepc, s2 #告诉 sret 应该回到哪个执行位置
 
+    # 按 SAVE_ALL 的布局恢复通用寄存器，x0 恒为零，无需恢复
     LOAD x1, 1*REGBYTES(sp)
     LOAD x3, 3*REGBYTES(sp)
     LOAD x4, 4*REGBYTES(sp)
@@ -93,6 +94,7 @@
     LOAD x30, 30*REGBYTES(sp)
     LOAD x31, 31*REGBYTES(sp)
 
+    # 最后恢复旧 sp，之前的所有 LOAD 都依赖当前 Trap frame 地址
     LOAD x2, 2*REGBYTES(sp)
 
     .endm
@@ -102,9 +104,9 @@
 __alltraps:
     SAVE_ALL
 
-    #lab3 function1 2410867
+    # a0 传递第一个参数：当前栈上的 struct trapframe 地址
     mv a0, sp
-    call trap
+    jal trap
     # sp should be the same as before "jal trap"
 
     .globl __trapret

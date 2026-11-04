@@ -81,17 +81,16 @@ size_t nr_free_pages(void) {
     return ret;
 }
 
-//lab2 请补充你在lab2中的代码
-
+// 复用 lab2 的实现。
 static void page_init(void) {
     extern char end[];
 
     va_pa_offset = PHYSICAL_MEMORY_OFFSET;
 
-
+    //从设备树获取 RAM 范围（物理地址），并检查有效性
     uint64_t mem_base = get_memory_base();
     uint64_t mem_size = get_memory_size();
-
+    //0x80000000~0x08800000
     if (mem_base == 0 || mem_size == 0 ||
         mem_size > (~(uint64_t)0 - mem_base)) {
         panic("page_init: invalid memory information");
@@ -107,7 +106,7 @@ static void page_init(void) {
     cprintf("  memory: 0x%016lx, [0x%016lx, 0x%016lx).\n",
             mem_size, mem_base, mem_end);
 
-
+    // 将可管理物理内存上界向下按页对齐。
     uintptr_t maxpa = mem_end;
     if (maxpa > PHYSICAL_MEMORY_END) {
         maxpa = PHYSICAL_MEMORY_END;
@@ -119,9 +118,9 @@ static void page_init(void) {
         panic("page_init: insufficient manageable memory");
     }
 
-
+    // pages 是描述符数组的虚拟地址，数组放在内核之后。
     pages = (struct Page *)ROUNDUP((uintptr_t)end, PGSIZE);
-    size_t page_count = npage - nbase;
+    size_t page_count = npage - nbase;//0x88000 − 0x80000=32768
     uintptr_t pages_pa = PADDR(pages);
 
     if (pages_pa > maxpa ||
@@ -129,7 +128,7 @@ static void page_init(void) {
         panic("page_init: insufficient memory for page descriptors");
     }
 
-
+    // 先保留所有页，之后仅将可用区交给管理器。
     memset(pages, 0, page_count * sizeof(struct Page));
     for (size_t i = 0; i < page_count; i++) {
         SetPageReserved(pages + i);

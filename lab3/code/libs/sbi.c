@@ -12,6 +12,8 @@ uint64_t SBI_REMOTE_SFENCE_VMA = 6;
 uint64_t SBI_REMOTE_SFENCE_VMA_ASID = 7;
 uint64_t SBI_SHUTDOWN = 8;
 
+//内核运行在 S 模式（监督态），OpenSBI 运行在 M 模式（机器态）。
+//ecall 是进入更高权限处理程序的入口
 uint64_t sbi_call(uint64_t sbi_type, uint64_t arg0, uint64_t arg1, uint64_t arg2) {
     uint64_t ret_val;
     __asm__ volatile (

@@ -6,6 +6,8 @@
 
 volatile size_t ticks;
 
+//rdtime 把硬件时间计数器的值读入变量 n
+//当前时间计数器频率是 10 MHz
 static inline uint64_t get_cycles(void) {
 #if __riscv_xlen == 64
     uint64_t n;
@@ -33,6 +35,7 @@ static uint64_t timebase = 100000;
  * */
 void clock_init(void) {
     // enable timer interrupt in sie
+    //允许当前 hart（硬件线程）接收 S 模式定时器中断
     set_csr(sie, MIP_STIP);
     // divided by 500 when using Spike(2MHz)
     // divided by 100 when using QEMU(10MHz)
@@ -45,4 +48,5 @@ void clock_init(void) {
     cprintf("++ setup timer interrupts\n");
 }
 
+//调用的 sbi_set_timer() 会通过 sbi_call() 执行 ecall
 void clock_set_next_event(void) { sbi_set_timer(get_cycles() + timebase); }

@@ -4,8 +4,7 @@
 #include <best_fit_pmm.h>
 #include <stdio.h>
 
-//lab2 请补充你在lab2中的代码
-
+// 复用 lab2 的实现。
 static free_area_t free_area;
 
 #define free_list (free_area.free_list)
@@ -13,7 +12,7 @@ static free_area_t free_area;
 
 static void best_fit_check(void);
 
-
+// Insert by physical address, then merge with adjacent free blocks.
 static void
 best_fit_insert_block(struct Page *base) {
     list_entry_t *le = list_next(&free_list);
@@ -56,7 +55,7 @@ best_fit_init(void) {
     nr_free = 0;
 }
 
-
+////登记空闲区域
 static void
 best_fit_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
@@ -71,7 +70,7 @@ best_fit_init_memmap(struct Page *base, size_t n) {
     best_fit_insert_block(base);
 }
 
-
+////分配连续页
 static struct Page *
 best_fit_alloc_pages(size_t n) {
     assert(n > 0);
@@ -95,7 +94,7 @@ best_fit_alloc_pages(size_t n) {
         return NULL;
     }
 
-
+    // Allocate the front of the block and keep any remainder in place.
     list_entry_t *prev = list_prev(&(page->page_link));
     list_del(&(page->page_link));
     if (page->property > n) {
@@ -110,7 +109,7 @@ best_fit_alloc_pages(size_t n) {
     return page;
 }
 
-
+//释放连续页
 static void
 best_fit_free_pages(struct Page *base, size_t n) {
     assert(n > 0);
